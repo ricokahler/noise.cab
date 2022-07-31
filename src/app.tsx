@@ -9,7 +9,7 @@ const usePromise = createPromiseSuspender();
 function useAudioContext() {
   return usePromise(async () => {
     const context = new AudioContext({
-      sampleRate: 320_000,
+      sampleRate: 'chrome' in window ? 320_000 : 192_000,
     });
 
     await context.audioWorklet.addModule(
