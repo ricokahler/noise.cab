@@ -14,3 +14,15 @@ body {
 * {
   box-sizing: border-box;
 }
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.container {
+  margin: auto;
+  width: 500px;
+  padding: 1rem;
+  border-radius: 4px;
+}

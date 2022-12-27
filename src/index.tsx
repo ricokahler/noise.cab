@@ -13,9 +13,13 @@ if (!container) {
 
 const root = createRoot(container);
 root.render(
-  <ErrorBoundary fallback={<>Error</>}>
-    <Suspense fallback={<>Loading…</>}>
-      <App />
-    </Suspense>
-  </ErrorBoundary>,
+  <div className="app">
+    <div className="container">
+      <ErrorBoundary fallback={<>Error</>}>
+        <Suspense fallback={<>Loading…</>}>
+          <App />
+        </Suspense>
+      </ErrorBoundary>
+    </div>
+  </div>,
 );
