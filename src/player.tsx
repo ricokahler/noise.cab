@@ -93,7 +93,7 @@ export const Player = forwardRef(
       mediaSession.setActionHandler('pause', () => audioEl.pause());
 
       const handlePlay = () => (mediaSession.playbackState = 'playing');
-      const handlePause = () => (mediaSession.playbackState = 'playing');
+      const handlePause = () => (mediaSession.playbackState = 'paused');
 
       audioEl.addEventListener('play', handlePlay);
       audioEl.addEventListener('pause', handlePause);
