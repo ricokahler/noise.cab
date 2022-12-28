@@ -36,7 +36,7 @@ export const Player = forwardRef(
     const audioEl = useMemo(() => {
       const el = document.createElement('audio');
       el.srcObject = audioDestination.stream;
-      el.controls = true;
+
       return el;
     }, [audioDestination]);
 
