@@ -10,7 +10,7 @@ export function App() {
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const [volume, setVolume] = useState(25);
+  const [volume, setVolume] = useState(50);
   const [angle, setAngle] = useState(85);
   const [center, setCenter] = useState(0.5);
 
@@ -28,6 +28,33 @@ export function App() {
       audioEl.removeEventListener('play', handlePlay);
       audioEl.removeEventListener('pause', handlePause);
     };
+  }, []);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  }, [playing]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'noise.cab',
+      artwork: [],
+    });
+
+    navigator.mediaSession.setActionHandler('play', async () => {
+      await audioRef.current?.play();
+    });
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.current?.pause();
+    });
+
+    navigator.mediaSession.setActionHandler('stop', () => {
+      audioRef.current?.pause();
+    });
   }, []);
 
   return (
@@ -53,9 +80,7 @@ export function App() {
             onVolumeChange={setVolume}
             angle={angle}
             center={center}
-            onStateChange={(state) => {
-              setPlaying(state === 'playing');
-            }}
+            onStateChange={(state) => setPlaying(state === 'playing')}
           />
         </ErrorBoundary>
       </Suspense>
