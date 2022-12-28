@@ -109,6 +109,17 @@ export function App() {
       >
         {playing ? 'stop' : 'start'}
       </button>
+
+      <footer className={styles.footer}>
+        <ul className={styles.links}>
+          <li>
+            <a href="mailto:hello@rico.codes">hello@rico.codes</a>
+          </li>
+          <li>
+            <a href="https://github.com/ricokahler/noise.cab">GitHub</a>
+          </li>
+        </ul>
+      </footer>
     </div>
   );
 }
