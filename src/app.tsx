@@ -4,7 +4,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import styles from './app.module.css';
 import { Player } from './player';
 import { RangeSlider } from './range-slider';
-import { notify } from './use-audio-context';
+import { getAudioContext } from './use-audio-context';
 
 export function App() {
   const [playing, setPlaying] = useState(false);
@@ -28,33 +28,6 @@ export function App() {
       audioEl.removeEventListener('play', handlePlay);
       audioEl.removeEventListener('pause', handlePause);
     };
-  }, []);
-
-  useEffect(() => {
-    if (!('mediaSession' in navigator)) return;
-
-    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
-  }, [playing]);
-
-  useEffect(() => {
-    if (!('mediaSession' in navigator)) return;
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: 'noise.cab',
-      artwork: [],
-    });
-
-    navigator.mediaSession.setActionHandler('play', async () => {
-      await audioRef.current?.play();
-    });
-
-    navigator.mediaSession.setActionHandler('pause', () => {
-      audioRef.current?.pause();
-    });
-
-    navigator.mediaSession.setActionHandler('stop', () => {
-      audioRef.current?.pause();
-    });
   }, []);
 
   return (
@@ -120,13 +93,17 @@ export function App() {
 
       <button
         className={styles.button}
-        onClick={() => {
-          notify();
+        onClick={async () => {
+          const audioContext = await getAudioContext();
+          audioContext.resume();
 
-          if (playing) {
-            audioRef.current?.pause();
+          const audioEl = audioRef.current;
+          if (!audioEl) return;
+
+          if (audioEl.paused) {
+            await audioEl.play();
           } else {
-            audioRef.current?.play();
+            audioEl.pause();
           }
         }}
       >

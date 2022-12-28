@@ -3,32 +3,10 @@ import { createPromiseSuspender } from '@ricokahler/promise-suspender';
 
 const usePromise = createPromiseSuspender();
 
-const listeners = new Set<() => void>();
+let audioContextRef = { current: null as AudioContext | null };
 
-// notifies the promise suspender to resume. this should happen upon user input
-// otherwise the audio context will not load in certain browsers
-export function notify() {
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-// returns a promise that completes onces notify is called
-function ready() {
-  return new Promise<void>((resolve) => {
-    const listener = () => {
-      listeners.delete(listener);
-      resolve();
-    };
-
-    listeners.add(listener);
-  });
-}
-
-export function useAudioContext() {
-  return usePromise(async () => {
-    await ready();
-
+export async function getAudioContext() {
+  if (!audioContextRef.current) {
     const context = new AudioContext({
       sampleRate: 'chrome' in window ? 320_000 : 192_000,
     });
@@ -39,6 +17,12 @@ export function useAudioContext() {
       }),
     );
 
-    return context;
-  }, []);
+    audioContextRef.current = context;
+  }
+
+  return audioContextRef.current;
+}
+
+export function useAudioContext() {
+  return usePromise(getAudioContext, []);
 }

@@ -35,8 +35,8 @@ export const Player = forwardRef(
 
     const audioEl = useMemo(() => {
       const el = document.createElement('audio');
-      el.autoplay = true;
       el.srcObject = audioDestination.stream;
+      el.controls = true;
       return el;
     }, [audioDestination]);
 
@@ -78,6 +78,34 @@ export const Player = forwardRef(
         audioEl.removeEventListener('play', handlePlay);
       };
     }, [audioEl, audioContext, onStateChange]);
+
+    // add media session metadata and controls
+    useEffect(() => {
+      if (!('mediaSession' in navigator)) return;
+      const { mediaSession } = navigator;
+
+      mediaSession.metadata = new MediaMetadata({
+        title: 'noise.cab',
+        album: 'a simple website that generates noise',
+      });
+
+      mediaSession.setActionHandler('play', () => audioEl.play());
+      mediaSession.setActionHandler('pause', () => audioEl.pause());
+
+      const handlePlay = () => (mediaSession.playbackState = 'playing');
+      const handlePause = () => (mediaSession.playbackState = 'playing');
+
+      audioEl.addEventListener('play', handlePlay);
+      audioEl.addEventListener('pause', handlePause);
+
+      return () => {
+        mediaSession.setActionHandler('play', null);
+        mediaSession.setActionHandler('pause', null);
+
+        audioEl.removeEventListener('play', handlePlay);
+        audioEl.removeEventListener('pause', handlePause);
+      };
+    }, [audioEl]);
 
     // sync volume
     useEffect(() => {
