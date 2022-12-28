@@ -3,11 +3,19 @@ import { useMemo, useEffect } from 'react';
 const guard = (lower: number, value: number, upper: number) =>
   Math.min(Math.max(value, lower), upper);
 
-export function useNoiseGenerator(
-  audioContext: AudioContext,
-  angle: number,
-  center: number,
-): AudioNode {
+interface Props {
+  audioContext: AudioContext;
+  angle: number;
+  center: number;
+  volume: number;
+}
+
+export function useNoiseGenerator({
+  angle,
+  audioContext,
+  center,
+  volume,
+}: Props): AudioNode {
   // converts degrees to radians
   const theta = -(angle / 360) * Math.PI * 2;
   // converts the angle to a slope
@@ -102,7 +110,19 @@ export function useNoiseGenerator(
     const gain = a * b * 4 + 1;
 
     compensationGain.gain.value = gain;
-  }, [segmentedNoiseNodes, slope, center]);
+  }, [segmentedNoiseNodes, slope, center, compensationGain]);
 
-  return compensationGain;
+  // create a gain node to react to volume slider changes
+  const volumeGain = useMemo(() => audioContext.createGain(), [audioContext]);
+
+  useEffect(() => {
+    compensationGain.connect(volumeGain);
+  }, [compensationGain, volumeGain]);
+
+  // react to volume changes
+  useEffect(() => {
+    volumeGain.gain.value = (volume / 100) * 0.5; // `0.5` prevents distortion
+  }, [volumeGain, volume]);
+
+  return volumeGain;
 }

@@ -14,11 +14,11 @@ import { useNoiseGenerator } from './use-noise-generator';
 
 interface Props {
   className?: string;
-  onStateChange: (state: 'paused' | 'playing') => void;
   volume: number;
-  onVolumeChange: (volume: number) => void;
   angle: number;
   center: number;
+  onVolumeChange: (volume: number) => void;
+  onStateChange: (state: 'paused' | 'playing') => void;
 }
 
 export const Player = forwardRef(
@@ -27,22 +27,25 @@ export const Player = forwardRef(
     incomingRef: React.Ref<HTMLAudioElement>,
   ) => {
     const rootRef = useRef<HTMLDivElement>(null);
-    const audioEl = useMemo(() => document.createElement('audio'), []);
+    const audioContext = useAudioContext();
+    const audioDestination = useMemo(
+      () => audioContext.createMediaStreamDestination(),
+      [audioContext],
+    );
 
-    useEffect(() => {
-      // play on mount
-      setTimeout(() => {
-        audioEl.play();
-      }, 0);
-    }, [audioEl]);
+    const audioEl = useMemo(() => {
+      const el = document.createElement('audio');
+      el.autoplay = true;
+      el.srcObject = audioDestination.stream;
+      return el;
+    }, [audioDestination]);
 
     useImperativeHandle(incomingRef, () => audioEl, [audioEl]);
 
-    const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+    const [renderingContext, setRenderingContext] =
+      useState<CanvasRenderingContext2D | null>(null);
     const onStateChange = useStableCallback(props.onStateChange);
     const onVolumeChange = useStableCallback(props.onVolumeChange);
-
-    const audioContext = useAudioContext();
 
     // append the audio element to the root div
     useEffect(() => {
@@ -91,25 +94,30 @@ export const Player = forwardRef(
 
       audioEl.addEventListener('volumechange', handler);
       return () => audioEl.removeEventListener('volumechange', handler);
-    }, [volume, audioEl]);
-
-    const noiseGenerator = useNoiseGenerator(audioContext, angle, center);
-    const visualizer = useVisualizer(ctx, audioContext, volume);
+    }, [volume, audioEl, onVolumeChange]);
 
     // wire up the noise generator to the audio element and the visualizer
-    useEffect(() => {
-      const audioElSrc = audioContext.createMediaStreamDestination();
-      audioEl.srcObject = audioElSrc.stream;
+    const noiseGenerator = useNoiseGenerator({
+      audioContext,
+      angle,
+      center,
+      volume,
+    });
+    const visualizer = useVisualizer({
+      audioContext,
+      renderingContext,
+    });
 
-      noiseGenerator.connect(audioElSrc);
+    useEffect(() => {
       noiseGenerator.connect(visualizer);
-    }, [audioContext, noiseGenerator, visualizer]);
+      noiseGenerator.connect(audioDestination);
+    }, [audioDestination, audioEl, noiseGenerator, visualizer]);
 
     return (
       <div className={className} ref={rootRef}>
         <canvas
           className={styles.canvas}
-          ref={(el) => setCtx(el?.getContext('2d') || null)}
+          ref={(el) => setRenderingContext(el?.getContext('2d') || null)}
         />
       </div>
     );
